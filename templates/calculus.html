@@ -1,0 +1,25 @@
+{% extends "math_discipline.html" %}
+{% set discipline_name = "Differential Calculus" %}
+{% set concept_type = "calculus" %}
+
+{% block overview_content %}
+    <p>
+        Welcome to the land of Differential Calculus, the art of understanding change! If linear algebra is about static relationships, calculus is about the wild, dynamic journey. Think of it as having a superpower that lets you see the instantaneous velocity $v(t) = \\frac{dx}{dt}$ of a snail at any single moment, or find the steepest part of a rollercoaster where $\\frac{dy}{dx}$ is maximum. We're all about derivatives, which are just a fancy way of saying "rate of change." It's like having a mathematical speedometer for everything!
+    </p>
+    <p>
+        <b>The Core Idea: Finding the Slope of a Curve.</b> For a straight line, slope is easy: rise over run. But what about a curvy line, like a parabola $f(x) = x^2$? The slope is always changing! The derivative, written as $f'(x)$ or $\\frac{dy}{dx}$, is a magical new function that tells you the slope at *any* point on that curve. It's born from a simple idea: zoom in on the curve until it looks like a straight line, then find its slope. This "zooming in" is done with limits: $f'(x) = \lim_{h \to 0} \frac{f(x+h) - f(x)}{h}$. It looks scary, but it's just a formal way of saying, "Let's find the slope between two points that are ridiculously close together."
+    </p>
+    <p>
+        <b>Real-World Application: Stopping a Speeding Car.</b> Imagine you're a traffic analyst. A car's position is modeled by the function $p(t) = 2t^2 + 3t$, where $p$ is position in meters and $t$ is time in seconds. You need to know its exact velocity at $t=5$ seconds to see if it was speeding. Velocity is the rate of change of position, so we need the derivative!
+    </p>
+    <p>
+        <b>Mathematical Demonstration: The Power Rule.</b> Luckily, we don't always have to use that scary limit definition. For functions like ours, we can use a shortcut called the <b>Power Rule</b>: if $f(x) = ax^n$, then its derivative is $f'(x) = n \cdot ax^{n-1}$. You bring the power down to multiply and then subtract one from the power. It's a game-changer!
+        <br><br>
+        Let's find the velocity function, $v(t)$, which is the derivative of the position function, $p(t) = 2t^2 + 3t^1$.
+        <ol>
+            <li><b>Term 1 ($2t^2$):</b> The power is 2. Bring it down: $2 \cdot 2t^{2-1} = 4t^1 = 4t$.</li>
+            <li><b>Term 2 ($3t^1$):</b> The power is 1. Bring it down: $1 \cdot 3t^{1-1} = 3t^0 = 3 \cdot 1 = 3$. (Anything to the power of 0 is 1!)</li>
+        </ol>
+        So, our velocity function is $v(t) = 4t + 3$. To find the velocity at 5 seconds, just plug it in: $v(5) = 4(5) + 3 = 23$ meters per second. Busted! Now you're not just doing math; you're doing physics!
+    </p>
+{% endblock %}

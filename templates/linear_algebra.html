@@ -1,0 +1,29 @@
+{% extends "math_discipline.html" %}
+{% set discipline_name = "Linear Algebra" %}
+{% set concept_type = "linear-algebra" %}
+
+{% block overview_content %}
+    <p>
+        Welcome, future math wizard, to the wonderful world of Linear Algebra! Think of it as the secret decoder ring for the universe's hidden messages. At its heart, it's the study of lines, planes, and their wilder cousins in higher dimensions. Our main characters are vectors (think of them as arrows with attitude) and matrices (like Sudoku puzzles with a purpose). Together, they help us wrangle huge piles of numbers into something that actually makes sense. It's less about scary, abstract scribbles and more about learning the secret language of space and relationships.
+    </p>
+    <p>
+        <b>The Core Idea: Transforming Space with Matrices.</b> A matrix is just a grid of numbers. A vector is a point in space. The magic happens when you multiply a matrix by a vector. This isn't just random number-crunching; it's a <b>transformation</b>. The matrix acts on the point, moving it somewhere else. By choosing the right matrix, you can rotate the point, stretch it, shear it, or reflect it. It's like having a universal remote control for geometry.
+    </p>
+    <p>
+        <b>Real-World Application: Rotating a Video Game Character.</b> Imagine you have a character in a 2D game standing at the point (vector) $\vec{v} = \begin{bmatrix} 4 \\ 2 \end{bmatrix}$. You want to rotate the character 90 degrees counter-clockwise around the origin (0,0). How do you find its new coordinates? You use the 90-degree rotation matrix!
+    </p>
+    <p>
+        <b>Mathematical Demonstration: Matrix-Vector Multiplication.</b> The rotation matrix for a 90-degree counter-clockwise turn is $R = \begin{bmatrix} 0 & -1 \\ 1 & 0 \end{bmatrix}$. To find the new point, we multiply the matrix $R$ by the vector $\vec{v}$.
+        <br><br>
+        Here's how: you take the rows of the matrix and find the "dot product" with the column of the vector.
+        <br>
+        $R\vec{v} = \begin{bmatrix} 0 & -1 \\ 1 & 0 \end{bmatrix} \begin{bmatrix} 4 \\ 2 \end{bmatrix} = \begin{bmatrix} (0)(4) + (-1)(2) \\ (1)(4) + (0)(2) \end{bmatrix}$
+        <br><br>
+        Let's calculate the new coordinates:
+        <ol>
+            <li><b>New x-coordinate (Top Row):</b> $(0 \times 4) + (-1 \times 2) = 0 - 2 = -2$.</li>
+            <li><b>New y-coordinate (Bottom Row):</b> $(1 \times 4) + (0 \times 2) = 4 + 0 = 4$.</li>
+        </ol>
+        The new vector is $\begin{bmatrix} -2 \\ 4 \end{bmatrix}$. Our character, who was at (4, 2), is now at (-2, 4). You just performed a rotation using linear algebra, exactly like a game engine does thousands of times per second!
+    </p>
+{% endblock %}

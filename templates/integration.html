@@ -1,0 +1,30 @@
+{% extends "math_discipline.html" %}
+{% set discipline_name = "Integration" %}
+{% set concept_type = "integration" %}
+
+{% block overview_content %}
+    <p>
+        Welcome to Integration, where we become mathematical detectives, piecing together the whole story from its changes! While differential calculus tells us how things change, integration helps us reconstruct the original from those changes. It's like having a superpower that lets you figure out the total distance traveled just by knowing the speed at each moment, or finding the area of a weird, curvy shape by slicing it into infinitely thin strips. We're talking about $\int f(x)dx$, the symbol that looks like a stretched-out S (which actually comes from "sum"—pretty clever, right?).
+    </p>
+    <p>
+        <b>The Core Idea: The Anti-Derivative.</b> The big secret is that integration is the reverse of differentiation! It's called finding the "antiderivative." If the derivative of $x^2$ is $2x$, then the integral of $2x$ is $x^2$. This amazing link is called the <b>Fundamental Theorem of Calculus</b>. It connects the idea of finding the area under a curve (a "definite integral") with the process of reversing a derivative (an "indefinite integral").
+    </p>
+    <p>
+        <b>Real-World Application: Filling a Reservoir.</b> Imagine water flows into a reservoir at a changing rate, given by $r(t) = 4t + 3$ cubic meters per second (hey, that's our velocity function from the calculus example!). How much water flows into the reservoir between $t=1$ and $t=5$ seconds? To find the total accumulation, we integrate the rate!
+    </p>
+    <p>
+        <b>Mathematical Demonstration: The Reverse Power Rule.</b> To integrate, we reverse the power rule. Instead of multiplying by the power and subtracting 1, we <b>add 1 to the power and divide by the new power</b>.
+        <br><br>
+        Let's find the antiderivative of $r(t) = 4t + 3$, which we'll call $A(t)$ for "amount".
+        <ol>
+            <li><b>Term 1 ($4t^1$):</b> Add 1 to the power: $t^2$. Divide by the new power: $\frac{4t^2}{2} = 2t^2$.</li>
+            <li><b>Term 2 ($3$, which is $3t^0$):</b> Add 1 to the power: $t^1$. Divide by the new power: $\frac{3t^1}{1} = 3t$.</li>
+        </ol>
+        So the antiderivative is $A(t) = 2t^2 + 3t$. This is the original position function from our calculus example! Mind. Blown. To find the total water added between 1 and 5 seconds, we calculate $A(5) - A(1)$:
+        <ul>
+            <li>$A(5) = 2(5^2) + 3(5) = 2(25) + 15 = 65$</li>
+            <li>$A(1) = 2(1^2) + 3(1) = 2 + 3 = 5$</li>
+        </ul>
+        Total water = $65 - 5 = 60$ cubic meters. You just used integration to measure a quantity!
+    </p>
+{% endblock %}

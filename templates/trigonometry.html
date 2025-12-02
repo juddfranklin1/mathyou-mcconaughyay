@@ -1,0 +1,31 @@
+{% extends "math_discipline.html" %}
+{% set discipline_name = "Trigonometry" %}
+{% set concept_type = "trigonometry" %}
+
+{% block overview_content %}
+    <p>
+        Welcome to Trigonometry, where circles and triangles join forces to create mathematical magic! Think of it as your personal GPS in the world of angles and ratios. While other branches of math might seem abstract, trig is where mathematics gets real—literally! Every time you see a rainbow, watch a Ferris wheel turn, or wonder why your satellite TV works, you're witnessing trigonometry in action. It's the mathematical art of breaking down circles and triangles into relationships we can understand and use.
+    </p>
+    <p>
+        <b>The Core Idea: The Unit Circle.</b> Forget just triangles for a second and think about a circle with a radius of 1 (the "unit circle"). If you draw a line from the center to any point on the edge, it forms an angle, $\theta$. The coordinates of that point on the circle are, magically, $(\cos \theta, \sin \theta)$. That's it! Sine is the y-coordinate, and Cosine is the x-coordinate. This is why $\sin(0^\circ)=0$ (you're at point (1,0)) and $\sin(90^\circ)=1$ (you've moved up to point (0,1)). All of trigonometry unfolds from this one beautiful idea.
+    </p>
+    <p>
+        <b>Real-World Application: Modeling a Ferris Wheel.</b> You're on a Ferris wheel with a radius of 50 feet, and the center of the wheel is 60 feet off the ground. Your height changes over time in a smooth, wavy pattern. This is a job for the sine function! We can model your height with an equation like $H(t) = A \sin(B(t - C)) + D$.
+    </p>
+    <p>
+        <b>Mathematical Demonstration: Building the Height Function.</b> Let's build the equation for your height, $H(t)$, where $t$ is time in seconds.
+        <ul>
+            <li><b>D (Vertical Shift):</b> The center of the ride is 60 feet up. This is the middle of our wave. So, $D = 60$.</li>
+            <li><b>A (Amplitude):</b> The radius is 50 feet. You go 50 feet above the middle and 50 feet below it. So, the amplitude is $A = 50$.</li>
+            <li><b>B (Period):</b> Let's say the wheel takes 120 seconds to make one full rotation. The period of a standard sine wave is $2\pi$. To find our multiplier $B$, we solve $B \cdot 120 = 2\pi$, which gives $B = \frac{2\pi}{120} = \frac{\pi}{60}$.</li>
+            <li><b>C (Phase Shift):</b> If you start at the bottom of the wheel instead of the middle, the wave is shifted. For simplicity, let's assume you start at the "3 o'clock" position, so the sine wave starts right at the midline and there's no horizontal shift. $C=0$.</li>
+        </ul>
+        Our final model is $H(t) = 50 \sin(\frac{\pi}{60}t) + 60$.
+        <br><br>
+        What's your height after 30 seconds (a quarter turn)?
+        <br>
+        $H(30) = 50 \sin(\frac{\pi}{60} \cdot 30) + 60 = 50 \sin(\frac{\pi}{2}) + 60$.
+        <br>
+        From the unit circle, we know $\sin(\frac{\pi}{2}) = 1$. So, $H(30) = 50(1) + 60 = 110$ feet. You're at the very top! You just modeled a real-world ride with a trig function.
+    </p>
+{% endblock %}

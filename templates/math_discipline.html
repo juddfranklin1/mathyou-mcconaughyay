@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block title %}{{ discipline_name }} Concepts{% endblock %}
+
+{% block content %}
+    <h1>{{ discipline_name }} Concepts</h1>
+    <math-content concept-type="{{ concept_type }}" concepts='{{ concepts|tojson|safe }}'
+        {% if practice_problems %}
+            practice-problems='{{ practice_problems|tojson|safe }}'
+        {% endif %}>
+        <div slot="overview">
+            {% block overview_content %}{% endblock %}
+        </div>
+    </math-content>
+{% endblock %}
