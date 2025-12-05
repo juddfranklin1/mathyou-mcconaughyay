@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>{% block title %}{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/concepts.css') }}">
     <!-- KaTeX for math rendering -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
     <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
@@ -13,14 +14,14 @@
 <body>
     <nav class="navbar">
         <a href="{{ url_for('index') }}" {% if active_page == 'home' %}class="active"{% endif %}>Home</a>
-        <a href="{{ url_for('linear_algebra') }}" {% if active_page == 'linear-algebra' %}class="active"{% endif %}>Linear Algebra</a>
-        <a href="{{ url_for('calculus') }}" {% if active_page == 'calculus' %}class="active"{% endif %}>Differential Calculus</a>
-        <a href="{{ url_for('integration') }}" {% if active_page == 'integration' %}class="active"{% endif %}>Integration</a>
-        <a href="{{ url_for('trigonometry') }}" {% if active_page == 'trigonometry' %}class="active"{% endif %}>Trigonometry</a>
+        <a href="{{ url_for('discipline_page', discipline_id='linear-algebra') }}" {% if active_page == 'linear-algebra' %}class="active"{% endif %}>Linear Algebra</a>
+        <a href="{{ url_for('discipline_page', discipline_id='calculus') }}" {% if active_page == 'calculus' %}class="active"{% endif %}>Differential Calculus</a>
+        <a href="{{ url_for('discipline_page', discipline_id='integration') }}" {% if active_page == 'integration' %}class="active"{% endif %}>Integration</a>
+        <a href="{{ url_for('discipline_page', discipline_id='trigonometry') }}" {% if active_page == 'trigonometry' %}class="active"{% endif %}>Trigonometry</a>
     </nav>
     <div class="container">
         {% block content %}{% endblock %}
     </div>
-    <script src="{{ url_for('static', filename='math-content.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/math-content.js') }}"></script>
 </body>
 </html>

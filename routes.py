@@ -1,64 +1,45 @@
 """Routes for the math learning application."""
 
-from flask import render_template, jsonify, request
-from data import (
-    LINEAR_ALGEBRA_CONCEPTS,
-    DIFFERENTIAL_CALCULUS_CONCEPTS,
-    INTEGRATION_CONCEPTS,
-    TRIGONOMETRY_CONCEPTS
-)
-from data.practice_problems import LINEAR_ALGEBRA_PROBLEMS
+from flask import render_template, jsonify, request, abort
+from data.disciplines import DISCIPLINES
 
 def init_routes(app):
     @app.route('/')
     def index():
         return render_template('index.html', active_page='home')
 
-    @app.route('/linear-algebra')
-    def linear_algebra():
-        return render_template('linear_algebra.html', 
-                             concepts=list(LINEAR_ALGEBRA_CONCEPTS.keys()),
-                             active_page='linear-algebra',
-                             practice_problems=LINEAR_ALGEBRA_PROBLEMS)
-
-    @app.route('/calculus')
-    def calculus():
-        return render_template('calculus.html', 
-                             concepts=list(DIFFERENTIAL_CALCULUS_CONCEPTS.keys()),
-                             active_page='calculus')
-
-    @app.route('/integration')
-    def integration():
-        return render_template('integration.html', 
-                             concepts=list(INTEGRATION_CONCEPTS.keys()),
-                             active_page='integration')
-
-    @app.route('/concept')
-    def concept():
-        name = request.args.get('name')
-        data = LINEAR_ALGEBRA_CONCEPTS.get(name, {})
-        return jsonify(data)
-
-    @app.route('/calculus_concept')
-    def calculus_concept():
-        name = request.args.get('name')
-        data = DIFFERENTIAL_CALCULUS_CONCEPTS.get(name, {})
-        return jsonify(data)
-
-    @app.route('/integration_concept')
-    def integration_concept():
-        name = request.args.get('name')
-        data = INTEGRATION_CONCEPTS.get(name, {})
-        return jsonify(data)
+    # Use the 'regex' converter to safely handle hyphens in route names.
+    # This creates a pattern like '(linear-algebra|calculus|...)'
+    valid_disciplines_regex = '|'.join(DISCIPLINES.keys())
+    @app.route(f'/<regex("({valid_disciplines_regex})"):discipline_id>')
+    def discipline_page(discipline_id):
+        discipline = DISCIPLINES.get(discipline_id)
+        if not discipline:
+            abort(404)
         
-    @app.route('/trigonometry')
-    def trigonometry():
-        return render_template('trigonometry.html', 
-                             concepts=list(TRIGONOMETRY_CONCEPTS.keys()),
-                             active_page='trigonometry')
+        # Create the concepts list using the dictionary key for the name and a slug for the id.
+        concepts_list = [{'id': k.lower().replace(' ', '-'), 'name': k}
+                         for k, v in discipline['concepts'].items() if isinstance(v, dict)]
+        return render_template(discipline['template'],
+                             discipline_name=discipline['name'],
+                             concepts=concepts_list,
+                             active_page=discipline_id,
+                             practice_problems=discipline.get('problems'))
 
-    @app.route('/trigonometry_concept')
-    def trigonometry_concept():
-        name = request.args.get('name')
-        data = TRIGONOMETRY_CONCEPTS.get(name, {})
-        return jsonify(data)
+    @app.route('/api/concept')
+    def api_concept():
+        discipline_id = request.args.get('discipline')
+        concept_id = request.args.get('concept')
+        discipline = DISCIPLINES.get(discipline_id)
+        if not discipline or not concept_id:
+            return jsonify({'error': 'Missing discipline or concept ID'}), 400
+        
+        # Find the concept by matching the slug-like ID against the keys.
+        for key, value in discipline['concepts'].items():
+            if concept_id == key.lower().replace(' ', '-'):
+                # Add the name to the returned data, as the component expects it.
+                response_data = value.copy()
+                response_data['name'] = key
+                return jsonify(response_data)
+
+        return jsonify({'error': 'Concept not found'}), 404
