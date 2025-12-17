@@ -6,7 +6,7 @@ class PracticeProblem extends HTMLElement {
 
     async connectedCallback() {
         await this.waitForKaTeX();
-        this.problemData = JSON.parse(this.getAttribute('problem-data'));
+        this.problemData = JSON.parse(this.getAttribute('data-question'));
         this.renderContent();
         this.setupEventListeners();
     }
@@ -115,7 +115,7 @@ class PracticeProblem extends HTMLElement {
                     background-color: #f0f0f0;
                 }
                 .choice-item input[type="radio"] {
-                    margin-right: 10px;
+                    margin-right: 5px;
                 }
                 .choice-item label {
                     cursor: pointer;

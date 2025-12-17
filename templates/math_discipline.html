@@ -5,16 +5,16 @@
 {% block content %}
     <h1>{{ discipline_name }}</h1>
     <div class="discipline-layout">
-        <nav class="concept-nav">
-            <a href="#overview" class="concept-link active" data-concept="overview">Overview</a>
+        <nav class="nav-menu concept-nav" data-menu="concept-nav">
+            <a href="#overview" class="nav-link active" data-concept="overview">Overview</a>
             {% for concept in concepts %}
-                <a href="#{{ concept.id }}" class="concept-link" data-concept="{{ concept.id }}">{{ concept.name }}</a>
+                <a href="#{{ concept.slug }}" class="nav-link" data-concept="{{ concept.slug }}">{{ concept.name }}</a>
             {% endfor %}
         </nav>
     
         <math-content discipline-id="{{ active_page }}"
-            {% if practice_problems %}
-                practice-problems='{{ practice_problems|tojson|safe }}'
+            {% if problems %}
+                data-problems='{{ problems|tojson|safe }}'
             {% endif %}>
             <div slot="overview">
                 {% block overview_content %}{% endblock %}

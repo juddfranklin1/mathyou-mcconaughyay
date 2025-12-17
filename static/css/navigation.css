@@ -1,0 +1,190 @@
+/* --- Global Navigation Variables --- */
+:root {
+    --nav-primary-color: #007bff;
+    --nav-text-color: #0056b3;
+    --nav-bg-color: #f0f7ff;
+    --nav-hover-bg-color: #dbe9f7;
+    --nav-active-text-color: #fff;
+    --nav-border-color: #e0e0e0;
+    --nav-border-radius: 8px;
+    --nav-font-size: 0.9rem;
+    --nav-font-weight: 500;
+    --nav-active-font-weight: 600;
+}
+
+/* --- Shared Navigation Styles --- */
+.nav-menu {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.nav-link {
+    display: inline-block;
+    padding: 0.6rem 1rem;
+    color: var(--nav-text-color);
+    background-color: var(--nav-bg-color);
+    border-radius: var(--nav-border-radius);
+    text-decoration: none;
+    font-size: var(--nav-font-size);
+    font-weight: var(--nav-font-weight);
+    transition: all 0.2s ease-in-out;
+    border: 1px solid transparent;
+    white-space: nowrap;
+}
+
+/* Shared hover state */
+.nav-link:hover {
+    background-color: var(--nav-hover-bg-color);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* Shared active state */
+.nav-link.active {
+    color: var(--nav-active-text-color);
+    background-color: var(--nav-primary-color);
+    font-weight: var(--nav-active-font-weight);
+    box-shadow: 0 2px 4px rgba(0, 123, 255, 0.3);
+}
+
+/* --- Top Navigation Bar Specifics --- */
+.main-header {
+    background-color: #fff;
+    border-bottom: 1px solid var(--nav-border-color);
+    padding: 0 1rem;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 100px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.header-logo {
+    font-size: 1.5rem;
+    line-height: 1.5rem;
+    font-weight: 700;
+    color: var(--nav-primary-color);
+    text-decoration: none;
+}
+
+.top-nav {
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+/* Hamburger Button (Mobile Only) */
+.hamburger-btn {
+    display: none; /* Hidden by default */
+    flex-direction: column;
+    justify-content: space-around;
+    width: 30px;
+    height: 24px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    z-index: 110;
+}
+
+.hamburger-btn span {
+    width: 100%;
+    height: 3px;
+    background-color: var(--nav-text-color);
+    border-radius: 2px;
+    transition: all 0.3s ease-in-out;
+}
+
+.hamburger-btn:hover span {
+    background-color: var(--nav-primary-color);
+}
+
+/* Hamburger to "X" animation */
+.hamburger-btn.is-active span:nth-child(1) {
+    transform: translateY(8.5px) rotate(45deg);
+}
+.hamburger-btn.is-active span:nth-child(2) {
+    opacity: 0;
+}
+.hamburger-btn.is-active span:nth-child(3) {
+    transform: translateY(-8.5px) rotate(-45deg);
+}
+
+/* --- Mobile Navigation Styles --- */
+@media (max-width: 767px) {
+    .hamburger-btn {
+        display: flex;
+    }
+
+    .top-nav {
+        position: fixed;
+        top: 0;
+        right: 0;
+        width: 280px;
+        height: 100vh;
+        background-color: #fff;
+        box-shadow: -4px 0 15px rgba(0,0,0,0.1);
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: flex-start;
+        padding: 80px 2rem 2rem;
+        transform: translateX(100%);
+        transition: transform 0.3s ease-in-out;
+    }
+
+    .top-nav.is-open {
+        transform: translateX(0);
+    }
+
+    body.nav-open {
+        overflow: hidden;
+    }
+}
+
+/* --- Concept Sidebar Specifics --- */
+.discipline-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.concept-nav {
+    flex-wrap: wrap;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--nav-border-color);
+}
+
+/* Desktop Sidebar Layout */
+@media (min-width: 768px) {
+    .discipline-layout {
+        flex-direction: row;
+        align-items: flex-start;
+        gap: 2rem;
+    }
+
+    .concept-nav {
+        flex-direction: column;
+        flex-wrap: nowrap;
+        flex-shrink: 0;
+        width: 220px;
+        border-bottom: none;
+        border-right: 1px solid var(--nav-border-color);
+        padding-right: 2rem;
+        padding-bottom: 0;
+    }
+
+    .concept-nav .nav-link {
+        width: 100%;
+    }
+
+    .discipline-layout > math-content {
+        flex-grow: 1;
+        min-width: 0;
+    }
+}

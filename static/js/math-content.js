@@ -12,8 +12,10 @@ class MathContent extends HTMLElement {
     connectedCallback() {
         this.disciplineId = this.getAttribute('discipline-id');
         this.render();
+        this.problems = this.dataset.problems ? JSON.parse(this.dataset.problems) : {};
         this.addEventListeners();
         this.handleInitialLoad();
+        this.renderMathInOverview();
     }
 
     attributeChangedCallback(name, oldValue, newValue) {
@@ -78,6 +80,10 @@ class MathContent extends HTMLElement {
                 .concept-wrapper {
                     animation: fadeIn 0.4s ease-out;
                 }
+                
+                .katex-html {
+                    display: none;
+                }
             </style>
             <div class="content-area">
                 <div id="overview-content" class="active">
@@ -86,16 +92,13 @@ class MathContent extends HTMLElement {
                 <div id="concept-content"></div>
             </div>
         `;
-        // Ensure MathJax typesets the initial content if any
-        if (window.MathJax) {
-            window.MathJax.typesetPromise();
-        }
     }
 
     addEventListeners() {
         // Note: The nav is in the light DOM, so we listen on the document.
         document.addEventListener('click', (event) => {
-            const target = event.target.closest('.concept-link');
+            // Use the data-attribute as the selector for robustness.
+            const target = event.target.closest('[data-menu="concept-nav"] [data-concept]');
             if (!target) return;
             
             // We don't preventDefault, allowing the hash to change.
@@ -115,9 +118,10 @@ class MathContent extends HTMLElement {
     }
 
     updateContent(conceptId) {
-        const navLink = document.querySelector(`.concept-link[data-concept="${conceptId}"]`);
+        // Use data-attributes for selection, scoped to the concept navigation.
+        const navLink = document.querySelector(`[data-menu="concept-nav"] [data-concept="${conceptId}"]`);
         if (navLink) {
-            document.querySelectorAll('.concept-link').forEach(link => link.classList.remove('active'));
+            document.querySelectorAll('[data-menu="concept-nav"] [data-concept]').forEach(link => link.classList.remove('active'));
             navLink.classList.add('active');
 
             if (conceptId === 'overview') {
@@ -130,6 +134,24 @@ class MathContent extends HTMLElement {
     displayOverview() {
         this.shadowRoot.getElementById('overview-content').classList.add('active');
         this.shadowRoot.getElementById('concept-content').classList.remove('active');
+    }
+
+    renderMathInOverview() {
+        // The overview content is passed via a slot. We need to render math in it.
+        // We do this once, as the slotted content is not expected to change.
+        if (window.renderMathInElement && !this.overviewRendered) {
+            const overviewContent = this.shadowRoot.getElementById('overview-content');
+            console.log("overview content:", overviewContent);
+            window.renderMathInElement(overviewContent, {
+                delimiters: [
+                    {left: "$$", right: "$$", display: true},
+                    {left: "$", right: "$", display: false},
+                    {left: "\\(", right: "\\)", display: false},
+                    {left: "\\[", right: "\\]", display: true}
+                ]
+            });
+            this.overviewRendered = true; // Ensure we only do this once.
+        }
     }
 
     async fetchAndDisplayConcept(conceptId) {
@@ -155,6 +177,9 @@ class MathContent extends HTMLElement {
             this.conceptCache[conceptId] = data; // Cache the response
             this.renderConcept(data);
         } catch (error) {
+            if (error.name === 'AbortError') {
+                console.log('Fetch aborted');
+            }
             conceptContent.innerHTML = `<p>Error loading concept. Please try again.</p>`;
             console.error('Fetch error:', error);
         }
@@ -173,16 +198,57 @@ class MathContent extends HTMLElement {
         // Add other fields like core_idea, real_world_application etc. if they exist
         ['core_idea', 'real_world_application', 'mathematical_demonstration', 'study_plan'].forEach(key => {
             if (data[key]) {
-                innerHtml += `<h3>${key.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</h3><div>${data[key]}</div>`;
+                innerHtml += String.raw`<h3>${key.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</h3><div>${data[key]}</div>`;
             }
         });
 
         // By creating a wrapper, the animation is re-triggered on each render.
         conceptContent.innerHTML = `<div class="concept-wrapper">${innerHtml}</div>`;
 
-        // Tell MathJax to look for new math to render
-        if (window.MathJax) {
-            window.MathJax.typesetPromise([conceptContent]);
+        // Now, check for and load practice problems for this concept.
+        const conceptSlug = window.location.hash.substring(1);
+        if (this.problems && this.problems[conceptSlug]) {
+            this.loadPracticeProblems(conceptSlug, conceptContent);
+        }
+
+        // Tell KaTeX to look for new math to render inside the updated content.
+        if (window.renderMathInElement) {
+            window.renderMathInElement(conceptContent, {
+                delimiters: [
+                    {left: "$$", right: "$$", display: true},
+                    {left: "$", right: "$", display: false},
+                    {left: "\\(", right: "\\)", display: false},
+                    {left: "\\[", right: "\\]", display: true}
+                ]
+            });
+        }
+    }
+
+    async loadPracticeProblems(conceptSlug, container) {
+        const problemIds = this.problems[conceptSlug];
+        if (!problemIds || problemIds.length === 0) return;
+
+        const problemsContainer = document.createElement('div');
+        problemsContainer.className = 'practice-problems-container';
+        problemsContainer.innerHTML = '<h3>Practice Problems</h3>';
+        container.appendChild(problemsContainer);
+
+        // This is the fetch iterator you were looking for.
+        for (const problemId of problemIds) {
+            try {
+                const response = await fetch(`/api/question/${problemId}`);
+                if (!response.ok) throw new Error(`Failed to fetch question ${problemId}`);
+                const questionData = await response.json();
+
+                const problemElement = document.createElement('practice-problem');
+                problemElement.setAttribute('data-question', JSON.stringify(questionData));
+                problemsContainer.appendChild(problemElement);
+
+                console.log('question data:', questionData);
+
+            } catch (error) {
+                console.error(`Error loading practice problem ${problemId}:`, error);
+            }
         }
     }
 }
