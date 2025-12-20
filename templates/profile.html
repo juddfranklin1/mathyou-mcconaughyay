@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}Profile - MathYou McConaughyay{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+    <h1>User Profile</h1>
+
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <ul class="flashes">
+        {% for message in messages %}
+          <li style="color: red;">{{ message }}</li>
+        {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+
+    <div class="user-info">
+        <p><strong>Email:</strong> {{ current_user.email }}</p>
+        <p><strong>Member since:</strong> {{ current_user.created_at.strftime('%Y-%m-%d') }}</p>
+    </div>
+
+    <div class="password-section">
+        <h2>Change Password</h2>
+        <form action="{{ url_for('change_password') }}" method="post" class="password-form">
+            <div class="form-group">
+                <label for="current_password">Current Password:</label>
+                <input type="password" id="current_password" name="current_password" required>
+            </div>
+            <div class="form-group">
+                <label for="new_password">New Password:</label>
+                <input type="password" id="new_password" name="new_password" required>
+            </div>
+            <button type="submit">Update Password</button>
+        </form>
+    </div>
+
+    <h2>Answer History</h2>
+    {% if responses %}
+        <table class="history-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Subject</th>
+                    <th>Concept</th>
+                    <th>Question</th>
+                    <th>Result</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for response in responses %}
+                <tr>
+                    <td>{{ response.timestamp.strftime('%Y-%m-%d %H:%M') }}</td>
+                    <td>{{ response.question.concept.subject.name }}</td>
+                    <td>{{ response.question.concept.name }}</td>
+                    <td>{{ response.question.problem_text[:50] }}{% if response.question.problem_text|length > 50 %}...{% endif %}</td>
+                    <td>
+                        {% if response.is_correct %}
+                            <span class="status-correct">Correct</span>
+                        {% else %}
+                            <span class="status-incorrect">Incorrect</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>You haven't answered any questions yet. Go solve some problems!</p>
+    {% endif %}
+</div>
+
+<style>
+    .profile-container { max-width: 900px; margin: 0 auto; padding: 20px; }
+    .user-info { background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 30px; border: 1px solid #e9ecef; }
+    .password-section { background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 30px; border: 1px solid #e9ecef; }
+    .password-form .form-group { margin-bottom: 15px; }
+    .password-form label { display: block; margin-bottom: 5px; font-weight: bold; }
+    .password-form input { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+    .password-form button { background-color: #4CAF50; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-size: 16px; }
+    .password-form button:hover { background-color: #45a049; }
+    .history-table { width: 100%; border-collapse: collapse; margin-top: 15px; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .history-table th, .history-table td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #ddd; }
+    .history-table th { background-color: #f8f9fa; font-weight: 600; color: #333; }
+    .history-table tr:hover { background-color: #f5f5f5; }
+    .status-correct { color: #28a745; font-weight: bold; background: #d4edda; padding: 4px 8px; border-radius: 4px; font-size: 0.9em; }
+    .status-incorrect { color: #dc3545; font-weight: bold; background: #f8d7da; padding: 4px 8px; border-radius: 4px; font-size: 0.9em; }
+    
+    /* Render math in the table correctly */
+    .history-table td .katex { font-size: 1em; }
+</style>
+{% endblock %}

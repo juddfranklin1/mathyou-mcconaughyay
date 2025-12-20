@@ -1,20 +1,47 @@
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.dialects.postgresql import JSONB
 from datetime import datetime
+from flask import current_app
+from flask_login import UserMixin
+from werkzeug.security import generate_password_hash, check_password_hash
+from itsdangerous import URLSafeTimedSerializer as Serializer
 
 db = SQLAlchemy()
 
-class User(db.Model):
+class User(UserMixin, db.Model):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(120), unique=True, nullable=False)
-    password_hash = db.Column(db.String(128), nullable=False)
+    password_hash = db.Column(db.String(256), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     responses = db.relationship('UserResponse', back_populates='user', lazy=True)
 
     def __repr__(self):
         return f'<User {self.email}>'
+
+    def set_password(self, password):
+        """Create a hashed password."""
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password):
+        """Check a hashed password."""
+        return check_password_hash(self.password_hash, password)
+
+    def get_reset_token(self, expires_sec=1800):
+        """Generate a token for resetting the password."""
+        s = Serializer(current_app.config['SECRET_KEY'])
+        return s.dumps({'user_id': self.id}, salt='password-reset-salt')
+
+    @staticmethod
+    def verify_reset_token(token, expires_sec=1800):
+        """Verify the reset token and return the user."""
+        s = Serializer(current_app.config['SECRET_KEY'])
+        try:
+            user_id = s.loads(token, salt='password-reset-salt', max_age=expires_sec)['user_id']
+        except:
+            return None
+        return db.session.get(User, user_id)
 
 class Subject(db.Model):
     __tablename__ = 'subjects'

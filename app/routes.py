@@ -1,8 +1,9 @@
 """Routes for the math learning application."""
 
-from flask import render_template, jsonify, request, abort
+from flask import render_template, jsonify, request, abort, redirect, url_for, flash
+from flask_login import login_user, logout_user, login_required, current_user
 import logging
-from .models import Subject, Concept, Question
+from .models import Subject, Concept, Question, User, UserResponse, db
 
 def init_routes(app):
     # Custom 404 error handler
@@ -82,3 +83,130 @@ def init_routes(app):
         response_data.update(question.data)
 
         return jsonify(response_data)
+
+    @app.route('/register', methods=['GET', 'POST'])
+    def register():
+        if current_user.is_authenticated:
+            return redirect(url_for('index'))
+        if request.method == 'POST':
+            email = request.form.get('email')
+            password = request.form.get('password')
+            if User.query.filter_by(email=email).first():
+                flash('Email already registered')
+                return redirect(url_for('register'))
+            user = User(email=email)
+            user.set_password(password)
+            db.session.add(user)
+            db.session.commit()
+            login_user(user)
+            return redirect(url_for('index'))
+        return render_template('register.html')
+
+    @app.route('/login', methods=['GET', 'POST'])
+    def login():
+        if current_user.is_authenticated:
+            return redirect(url_for('index'))
+        if request.method == 'POST':
+            email = request.form.get('email')
+            password = request.form.get('password')
+            user = User.query.filter_by(email=email).first()
+            if user is None or not user.check_password(password):
+                flash('Invalid email or password')
+                return redirect(url_for('login'))
+            login_user(user)
+            return redirect(url_for('index'))
+        return render_template('login.html')
+
+    @app.route('/logout')
+    def logout():
+        logout_user()
+        return redirect(url_for('index'))
+
+    @app.route('/change_password', methods=['POST'])
+    @login_required
+    def change_password():
+        current_password = request.form.get('current_password')
+        new_password = request.form.get('new_password')
+
+        if not current_user.check_password(current_password):
+            flash('Invalid current password')
+            return redirect(url_for('profile'))
+
+        current_user.set_password(new_password)
+        db.session.commit()
+        flash('Your password has been updated.')
+        return redirect(url_for('profile'))
+
+    @app.route('/reset_password_request', methods=['GET', 'POST'])
+    def reset_password_request():
+        if current_user.is_authenticated:
+            return redirect(url_for('index'))
+        if request.method == 'POST':
+            email = request.form.get('email')
+            user = User.query.filter_by(email=email).first()
+            if user:
+                token = user.get_reset_token()
+                # In a real application, you would send an email here.
+                # For demonstration, we log the link to the console.
+                reset_url = url_for('reset_password', token=token, _external=True)
+                app.logger.info(f"Password reset link for {email}: {reset_url}")
+            
+            flash('Check your email for the instructions to reset your password')
+            return redirect(url_for('login'))
+        return render_template('reset_password_request.html')
+
+    @app.route('/reset_password/<token>', methods=['GET', 'POST'])
+    def reset_password(token):
+        if current_user.is_authenticated:
+            return redirect(url_for('index'))
+        user = User.verify_reset_token(token)
+        if not user:
+            flash('Invalid or expired token')
+            return redirect(url_for('index'))
+        if request.method == 'POST':
+            password = request.form.get('password')
+            user.set_password(password)
+            db.session.commit()
+            flash('Your password has been reset.')
+            return redirect(url_for('login'))
+        return render_template('reset_password.html')
+
+    @app.route('/profile')
+    @login_required
+    def profile():
+        responses = UserResponse.query.filter_by(user_id=current_user.id).order_by(UserResponse.timestamp.desc()).all()
+        return render_template('profile.html', responses=responses)
+
+    @app.route('/api/question/submit_answer', methods=['POST'])
+    @login_required
+    def submit_answer():
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+
+        legacy_id = data.get('question_id')
+        user_answer = data.get('answer')
+
+        if not legacy_id or user_answer is None:
+            return jsonify({'error': 'Missing question_id or answer'}), 400
+
+        question = Question.query.filter_by(legacy_id=legacy_id).first_or_404()
+
+        # Check correctness (converting to string handles both integer indices and string answers)
+        correct_answer = question.data.get('answer')
+        is_correct = str(user_answer).strip() == str(correct_answer).strip()
+
+        # Record the response
+        response = UserResponse(
+            user_id=current_user.id,
+            question_id=question.id,
+            response_data={'answer': user_answer},
+            is_correct=is_correct
+        )
+        db.session.add(response)
+        db.session.commit()
+
+        return jsonify({
+            'correct': is_correct,
+            'explanation': question.explanation
+        })

@@ -3,6 +3,7 @@ import os
 from flask_migrate import Migrate
 from werkzeug.routing import BaseConverter
 import logging
+from flask_login import LoginManager
 
 from .models import db
 from .routes import init_routes
@@ -14,6 +15,9 @@ class RegexConverter(BaseConverter):
         super(RegexConverter, self).__init__(url_map)
         self.regex = items[0]
 
+login_manager = LoginManager()
+login_manager.login_view = 'login'
+
 def create_app():
     """Create and configure an instance of the Flask application."""
     app = Flask(
@@ -22,6 +26,9 @@ def create_app():
         static_url_path='/static',
         template_folder='../templates'
     )
+
+    # --- Security Configuration ---
+    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') or 'dev-key-please-change-in-production'
 
     # --- Database Configuration ---
     # Allow overriding the DB via DATABASE_URL env var for local dev (e.g., sqlite)
@@ -52,6 +59,12 @@ def create_app():
     # --- Initialize Extensions ---
     db.init_app(app)
     Migrate(app, db)
+    login_manager.init_app(app)
+
+    from .models import User
+    @login_manager.user_loader
+    def load_user(user_id):
+        return db.session.get(User, int(user_id))
 
     # --- Register Routes and Converters ---
     app.url_map.converters['regex'] = RegexConverter

@@ -197,53 +197,98 @@ class PracticeProblem extends HTMLElement {
         });
     }
 
-    checkAnswer() {
+    async checkAnswer() {
         const feedback = this.shadowRoot.getElementById('feedback');
         const explanation = this.shadowRoot.getElementById('explanation');
-        let isCorrect = false;
+        const submitBtn = this.shadowRoot.getElementById('submit-btn');
+        
+        // Disable button and show loading state
+        submitBtn.disabled = true;
+        const originalBtnText = submitBtn.textContent;
+        submitBtn.textContent = 'Checking...';
+        
+        let userAnswer;
 
+        // Extract the answer based on the problem type
         switch(this.problemData.type) {
             case 'multiple_choice':
                 const selectedOption = this.shadowRoot.querySelector('input[name="answer"]:checked');
                 if (selectedOption) {
-                    isCorrect = parseInt(selectedOption.value) === this.problemData.answer;
+                    userAnswer = parseInt(selectedOption.value);
                 }
                 break;
 
             case 'vector':
-                const components = Array.from(this.shadowRoot.querySelectorAll('.vector-component'))
+                userAnswer = Array.from(this.shadowRoot.querySelectorAll('.vector-component'))
                     .map(input => input.value.trim());
-                const expectedComponents = JSON.parse(this.problemData.answer);
-                isCorrect = components.every((comp, index) => 
-                    comp === expectedComponents[index].toString());
                 break;
 
             case 'numerical':
             default:
-                const userAnswer = this.shadowRoot.getElementById('answer-input').value.trim();
-                isCorrect = userAnswer === this.problemData.answer.toString();
+                userAnswer = this.shadowRoot.getElementById('answer-input').value.trim();
                 break;
         }
 
-        if (isCorrect) {
-            feedback.textContent = "Excellent work! That's correct! You're getting really good at this! 🎉";
-            feedback.className = 'feedback success';
-        } else {
-            feedback.textContent = "Not quite right, but don't give up! Try reviewing the concept and attempt again. You've got this! 💪";
+        // Basic client-side validation to ensure an answer was provided
+        if (userAnswer === undefined || userAnswer === '' || (Array.isArray(userAnswer) && userAnswer.some(c => c === ''))) {
+            feedback.textContent = "Please provide an answer before submitting.";
             feedback.className = 'feedback error';
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalBtnText;
+            return;
         }
 
-        // Show explanation regardless of correctness
-        explanation.style.display = 'block';
-        explanation.innerHTML = `<strong>Explanation:</strong><br>${this.problemData.explanation}`;
-        if (window.renderMathInElement) {
-            window.renderMathInElement(explanation, {
-                delimiters: [
-                    {left: "$", right: "$", display: false},
-                    {left: "$$", right: "$$", display: true}
-                ],
-                throwOnError: false
+        try {
+            const response = await fetch('/api/question/submit_answer', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    question_id: this.problemData.id,
+                    answer: userAnswer
+                })
             });
+
+            if (response.status === 401) {
+                feedback.innerHTML = 'You must be <a href="/login" target="_top">logged in</a> to submit answers.';
+                feedback.className = 'feedback error';
+                return;
+            }
+
+            if (!response.ok) {
+                throw new Error('Submission failed');
+            }
+
+            const result = await response.json();
+
+            if (result.correct) {
+                feedback.textContent = "Excellent work! That's correct! You're getting really good at this! 🎉";
+                feedback.className = 'feedback success';
+            } else {
+                feedback.textContent = "Not quite right, but don't give up! Try reviewing the concept and attempt again. You've got this! 💪";
+                feedback.className = 'feedback error';
+            }
+
+            // Show explanation from server response
+            explanation.style.display = 'block';
+            explanation.innerHTML = `<strong>Explanation:</strong><br>${result.explanation}`;
+            
+            if (window.renderMathInElement) {
+                window.renderMathInElement(explanation, {
+                    delimiters: [
+                        {left: "$", right: "$", display: false},
+                        {left: "$$", right: "$$", display: true}
+                    ],
+                    throwOnError: false
+                });
+            }
+
+        } catch (error) {
+            console.error('Error submitting answer:', error);
+            feedback.textContent = "An error occurred while submitting your answer. Please try again.";
+            feedback.className = 'feedback error';
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalBtnText;
         }
     }
 
