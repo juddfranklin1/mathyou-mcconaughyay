@@ -72,6 +72,7 @@
     font-weight: 700;
     color: var(--nav-primary-color);
     text-decoration: none;
+    display: flex;;
     justify-content: center;
     align-items: center;
     column-gap: 10px;

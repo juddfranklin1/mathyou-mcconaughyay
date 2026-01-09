@@ -81,7 +81,7 @@ class Question(db.Model):
     __tablename__ = 'questions'
     id = db.Column(db.Integer, primary_key=True)
     # Using a simple string ID from your files for now
-    legacy_id = db.Column(db.String(20), unique=True, nullable=False)
+    legacy_id = db.Column(db.String(150), unique=True, nullable=False)
     concept_id = db.Column(db.Integer, db.ForeignKey('concepts.id'), nullable=False)
     
     problem_text = db.Column(db.Text, nullable=False)
