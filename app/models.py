@@ -1,4 +1,3 @@
-from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.dialects.postgresql import JSONB
 from datetime import datetime
 from flask import current_app
@@ -6,7 +5,7 @@ from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from itsdangerous import URLSafeTimedSerializer as Serializer
 
-db = SQLAlchemy()
+from .extensions import db
 
 class User(UserMixin, db.Model):
     __tablename__ = 'users'

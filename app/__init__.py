@@ -1,12 +1,12 @@
 from flask import Flask
-import os
-from flask_migrate import Migrate
 from werkzeug.routing import BaseConverter
 import logging
-from flask_login import LoginManager
 
-from .models import db
-from .routes import init_routes
+from .config import Config
+from .extensions import db, migrate, login_manager
+from .blueprints.main import main_bp
+from .blueprints.auth import auth_bp
+from .blueprints.api import api_bp
 
 
 class RegexConverter(BaseConverter):
@@ -15,10 +15,7 @@ class RegexConverter(BaseConverter):
         super(RegexConverter, self).__init__(url_map)
         self.regex = items[0]
 
-login_manager = LoginManager()
-login_manager.login_view = 'login'
-
-def create_app():
+def create_app(config_class=Config):
     """Create and configure an instance of the Flask application."""
     app = Flask(
         __name__,
@@ -27,25 +24,8 @@ def create_app():
         template_folder='../templates'
     )
 
-    # --- Security Configuration ---
-    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') or 'dev-key-please-change-in-production'
-
-    # --- Database Configuration ---
-    # Allow overriding the DB via DATABASE_URL env var for local dev (e.g., sqlite)
-    database_url = os.getenv('DATABASE_URL')
-    if database_url:
-        app.config['SQLALCHEMY_DATABASE_URI'] = database_url
-    else:
-        DB_USER = os.environ['DB_USER']
-        DB_PASSWORD = os.environ['DB_PASSWORD']
-        DB_HOST = os.environ['DB_HOST']
-        DB_PORT = os.environ['DB_PORT']
-        DB_NAME = os.environ['DB_NAME']
-
-        app.config['SQLALCHEMY_DATABASE_URI'] = (
-            f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
-        )
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    # --- Configuration ---
+    app.config.from_object(config_class)
 
     # --- Logging Configuration ---
     # Only configure logging when not in testing mode
@@ -58,7 +38,7 @@ def create_app():
 
     # --- Initialize Extensions ---
     db.init_app(app)
-    Migrate(app, db)
+    migrate.init_app(app, db)
     login_manager.init_app(app)
 
     from .models import User
@@ -68,6 +48,8 @@ def create_app():
 
     # --- Register Routes and Converters ---
     app.url_map.converters['regex'] = RegexConverter
-    init_routes(app)
+    app.register_blueprint(main_bp)
+    app.register_blueprint(auth_bp)
+    app.register_blueprint(api_bp, url_prefix='/api')
 
     return app

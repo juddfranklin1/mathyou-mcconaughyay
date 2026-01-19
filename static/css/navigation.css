@@ -34,6 +34,7 @@
 
 /* Shared hover state */
 .nav-link:hover {
+    color: var(--nav-text-color);
     background-color: var(--nav-hover-bg-color);
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
