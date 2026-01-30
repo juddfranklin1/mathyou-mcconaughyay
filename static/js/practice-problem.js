@@ -62,115 +62,7 @@ class PracticeProblem extends HTMLElement {
 
     renderContent() {
         this.shadowRoot.innerHTML = `
-            <style>
-                :host {
-                    display: block;
-                    margin: 20px 0;
-                    padding: 20px;
-                    background: #f8f9fa;
-                    border-radius: 8px;
-                    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-                }
-                .problem-container {
-                    margin-bottom: 20px;
-                }
-                .problem-header {
-                    font-weight: bold;
-                    margin-bottom: 10px;
-                    color: #2c3e50;
-                }
-                .problem-text {
-                    margin-bottom: 15px;
-                    line-height: 1.6;
-                }
-                .input-container {
-                    margin-top: 15px;
-                }
-                input[type="text"] {
-                    padding: 8px;
-                    border: 2px solid #ddd;
-                    border-radius: 4px;
-                    font-size: 16px;
-                    width: 200px;
-                    margin-right: 10px;
-                }
-                .vector-inputs {
-                    display: flex;
-                    align-items: center;
-                    gap: 8px;
-                    margin-bottom: 15px;
-                }
-                .vector-component {
-                    width: 80px !important;
-                }
-                .choice-item {
-                    margin: 10px 0;
-                    padding: 8px;
-                    border: 1px solid #ddd;
-                    border-radius: 4px;
-                    cursor: pointer;
-                    transition: background-color 0.2s;
-                }
-                .choice-item:hover {
-                    background-color: #f0f0f0;
-                }
-                .choice-item input[type="radio"] {
-                    margin-right: 5px;
-                }
-                .choice-item label {
-                    cursor: pointer;
-                    display: inline-block;
-                    width: calc(100% - 30px);
-                }
-                button {
-                    padding: 8px 16px;
-                    background-color: #4CAF50;
-                    color: white;
-                    border: none;
-                    border-radius: 4px;
-                    cursor: pointer;
-                    font-size: 16px;
-                    transition: background-color 0.3s;
-                    margin-top: 10px;
-                }
-                button:hover {
-                    background-color: #45a049;
-                }
-                .feedback {
-                    margin-top: 15px;
-                    padding: 10px;
-                    border-radius: 4px;
-                    display: none;
-                }
-                .feedback.success {
-                    background-color: #dff0d8;
-                    color: #3c763d;
-                    border: 1px solid #d6e9c6;
-                    display: block;
-                }
-                .feedback.error {
-                    background-color: #f8d7da;
-                    color: #721c24;
-                    border: 1px solid #f5c6cb;
-                    display: block;
-                }
-                .difficulty {
-                    display: inline-block;
-                    padding: 4px 8px;
-                    background: #e9ecef;
-                    border-radius: 4px;
-                    font-size: 0.9em;
-                    color: #495057;
-                    margin-bottom: 10px;
-                }
-                .explanation {
-                    margin-top: 15px;
-                    padding: 15px;
-                    background-color: #e8f4f8;
-                    border-radius: 4px;
-                    display: none;
-                }
-            </style>
+            <link rel="stylesheet" href="/static/css/web-components/practice-problem.css">
             <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
             <div class="problem-container">
                 <div class="difficulty">Difficulty: ${this.problemData.difficulty}</div>
@@ -238,6 +130,12 @@ class PracticeProblem extends HTMLElement {
             return;
         }
 
+        // Show temporary waiting message
+        feedback.textContent = "Alright, alright, alright... let's see if the math is mathin'.";
+        feedback.className = 'feedback';
+        feedback.style.display = 'block';
+        feedback.style.backgroundColor = '#e9ecef';
+
         try {
             const response = await fetch('/api/question/submit_answer', {
                 method: 'POST',
@@ -248,7 +146,16 @@ class PracticeProblem extends HTMLElement {
                 })
             });
 
-            if (response.status === 401) {
+            // Check if the request was redirected (e.g., to the login page)
+            if (response.redirected || response.status === 401) {
+                const loginModal = document.querySelector('login-modal');
+                if (loginModal) {
+                    feedback.style.display = 'none'; // Hide the "Please wait" message
+                    loginModal.show();
+                    return;
+                }
+                // Fallback if modal is missing
+                feedback.style.backgroundColor = '';
                 feedback.innerHTML = 'You must be <a href="/login" target="_top">logged in</a> to submit answers.';
                 feedback.className = 'feedback error';
                 return;
@@ -260,20 +167,15 @@ class PracticeProblem extends HTMLElement {
 
             const result = await response.json();
 
-            if (result.correct) {
-                feedback.textContent = "Excellent work! That's correct! You're getting really good at this! 🎉";
-                feedback.className = 'feedback success';
-            } else {
-                feedback.textContent = "Not quite right, but don't give up! Try reviewing the concept and attempt again. You've got this! 💪";
-                feedback.className = 'feedback error';
-            }
-
-            // Show explanation from server response
-            explanation.style.display = 'block';
-            explanation.innerHTML = `<strong>Explanation:</strong><br>${result.explanation}`;
+            // Clear temporary styles
+            feedback.style.backgroundColor = '';
+            feedback.style.display = '';
             
+            feedback.className = result.correct ? 'feedback success' : 'feedback error';
+            feedback.innerHTML = result.explanation;
+
             if (window.renderMathInElement) {
-                window.renderMathInElement(explanation, {
+                window.renderMathInElement(feedback, {
                     delimiters: [
                         {left: "$", right: "$", display: false},
                         {left: "$$", right: "$$", display: true}

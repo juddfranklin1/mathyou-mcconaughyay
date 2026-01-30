@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app
+from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app, jsonify
 from flask_login import login_user, logout_user, login_required, current_user
 from app.models import User, UserResponse
 from app.extensions import db
@@ -26,15 +26,27 @@ def register():
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
+        if request.is_json:
+            return jsonify({'success': True})
         return redirect(url_for('main.index'))
     if request.method == 'POST':
-        email = request.form.get('email')
-        password = request.form.get('password')
+        if request.is_json:
+            data = request.get_json()
+            email = data.get('email')
+            password = data.get('password')
+        else:
+            email = request.form.get('email')
+            password = request.form.get('password')
+            
         user = User.query.filter_by(email=email).first()
         if user is None or not user.check_password(password):
+            if request.is_json:
+                return jsonify({'success': False, 'message': 'Invalid email or password'}), 401
             flash('Invalid email or password')
             return redirect(url_for('auth.login'))
         login_user(user)
+        if request.is_json:
+            return jsonify({'success': True})
         return redirect(url_for('main.index'))
     return render_template('login.html')
 
@@ -93,5 +105,6 @@ def reset_password(token):
 @auth_bp.route('/profile')
 @login_required
 def profile():
+    active_page = 'auth.profile'
     responses = UserResponse.query.filter_by(user_id=current_user.id).order_by(UserResponse.timestamp.desc()).all()
-    return render_template('profile.html', responses=responses)
+    return render_template('profile.html', responses=responses, active_page=active_page)

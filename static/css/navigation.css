@@ -1,17 +1,3 @@
-/* --- Global Navigation Variables --- */
-:root {
-    --nav-primary-color: #007bff;
-    --nav-text-color: #0056b3;
-    --nav-bg-color: #f0f7ff;
-    --nav-hover-bg-color: #dbe9f7;
-    --nav-active-text-color: #fff;
-    --nav-border-color: #e0e0e0;
-    --nav-border-radius: 8px;
-    --nav-font-size: 0.9rem;
-    --nav-font-weight: 500;
-    --nav-active-font-weight: 600;
-}
-
 /* --- Shared Navigation Styles --- */
 .nav-menu {
     display: flex;
@@ -30,6 +16,7 @@
     transition: all 0.2s ease-in-out;
     border: 1px solid transparent;
     white-space: nowrap;
+    margin: 0 0.5rem  0.5rem 0;
 }
 
 /* Shared hover state */
