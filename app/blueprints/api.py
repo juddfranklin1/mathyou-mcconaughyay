@@ -3,6 +3,7 @@ from flask_login import login_required, current_user
 import logging
 import uuid
 import os
+import random
 import google.generativeai as genai
 from app.models import Subject, Concept, Question, UserResponse
 from app.extensions import db
@@ -231,9 +232,62 @@ def api_question(legacy_id):
     response_data.update(question.data)
     return jsonify(response_data)
 
+@api_bp.route('/question/next')
+def next_question():
+    current_legacy_id = request.args.get('current_id')
+    if not current_legacy_id:
+        return jsonify({'error': 'current_id required'}), 400
+    
+    current_q = Question.query.filter_by(legacy_id=current_legacy_id).first_or_404()
+    
+    # Find candidates with same concept and difficulty, excluding the current one
+    candidates = Question.query.filter_by(
+        concept_id=current_q.concept_id,
+        difficulty=current_q.difficulty
+    ).filter(Question.id != current_q.id).all()
+    
+    next_q = random.choice(candidates) if candidates else current_q
+        
+    response_data = {
+        'id': next_q.legacy_id,
+        'problem': next_q.problem_text,
+        'difficulty': next_q.difficulty,
+        'explanation': next_q.explanation,
+    }
+    response_data.update(next_q.data)
+    return jsonify(response_data)
+
+@api_bp.route('/question/schema', methods=['GET'])
+def get_question_schema():
+    """Returns the documentation and schema for creating a new question."""
+    return jsonify({
+        "endpoint": "/api/question/create",
+        "method": "POST",
+        "description": "Creates a new practice question in the database.",
+        "authentication": "Session cookie OR 'X-API-Key' header matching ADMIN_API_KEY env var.",
+        "payload_schema": {
+            "subject_slug": "string (Required, e.g., 'trigonometry')",
+            "concept_slug": "string (Required, e.g., 'unit-circle')",
+            "problem_text": "string (Required, supports LaTeX)",
+            "difficulty": "string (Optional, default 'Medium')",
+            "explanation": "string (Optional)",
+            "data": {
+                "type": "string ('multiple_choice' or 'numerical')",
+                "choices": ["string", "string"] + " (Required if type is multiple_choice)",
+                "answer": "string or int (Correct answer value or index)"
+            },
+            "legacy_id": "string (Optional, must be unique)"
+        }
+    })
+
 @api_bp.route('/question/create', methods=['POST'])
-@login_required
 def create_question():
+    # Allow access via session (human) or API Key (agent)
+    api_key = request.headers.get('X-API-Key')
+    admin_key = os.environ.get('ADMIN_API_KEY')
+    if not current_user.is_authenticated and (not admin_key or api_key != admin_key):
+        return jsonify({'error': 'Unauthorized'}), 401
+
     data = request.get_json()
     if not data:
         return jsonify({'error': 'No data provided'}), 400

@@ -195,7 +195,7 @@ class MathContent extends HTMLElement {
         // Add other fields like core_idea, real_world_application etc. if they exist
         ['core_idea', 'real_world_application', 'mathematical_demonstration', 'study_plan'].forEach(key => {
             if (data[key]) {
-                innerHtml += String.raw`<h3>${key.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</h3><div>${data[key]}</div>`;
+                innerHtml += String.raw`<h3>${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</h3><div>${data[key]}</div>`;
             }
         });
 

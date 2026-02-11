@@ -1,6 +1,18 @@
 :root {
     --font-family: Arial, sans-serif;
     --base-font-size: 16px;
-    --button-border-radius: 4px;
+    --button-border-radius: 0;
     --button-bg-color: #0d6efd;
+
+/* --- Global Navigation Variables --- */
+    --nav-primary-color: #007bff;
+    --nav-text-color: #0056b3;
+    --nav-bg-color: #f0f7ff;
+    --nav-hover-bg-color: #dbe9f7;
+    --nav-active-text-color: #fff;
+    --nav-border-color: #e0e0e0;
+    --nav-border-radius: 0;
+    --nav-font-size: 0.9rem;
+    --nav-font-weight: 500;
+    --nav-active-font-weight: 600;
 }

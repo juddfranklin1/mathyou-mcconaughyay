@@ -1,0 +1,25 @@
+[
+    {
+        "subject_slug": "trigonometry",
+        "concept_slug": "basic-ratios",
+        "problem_text": "In a right triangle, if $\\theta = 30^\\circ$ and the hypotenuse is 10, what is the length of the opposite side?",
+        "difficulty": "Easy",
+        "explanation": "Using $\\sin(\\theta) = \\frac{\\text{opposite}}{\\text{hypotenuse}}$, we have $\\sin(30^\\circ) = \\frac{x}{10}$. Since $\\sin(30^\\circ) = 0.5$, $x = 10 \\times 0.5 = 5$.",
+        "data": {
+            "type": "numerical",
+            "answer": "5"
+        }
+    },
+    {
+        "subject_slug": "calculus",
+        "concept_slug": "derivatives",
+        "problem_text": "What is the derivative of $f(x) = x^2$?",
+        "difficulty": "Easy",
+        "explanation": "Using the power rule $\\frac{d}{dx}x^n = nx^{n-1}$, for $n=2$, the derivative is $2x$.",
+        "data": {
+            "type": "multiple_choice",
+            "choices": ["x", "2x", "x^2", "2"],
+            "answer": 1
+        }
+    }
+]

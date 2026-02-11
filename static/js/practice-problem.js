@@ -71,6 +71,7 @@ class PracticeProblem extends HTMLElement {
                 ${this.getInputTemplate()}
                 <div id="feedback" class="feedback"></div>
                 <div id="explanation" class="explanation"></div>
+                <button id="next-btn">Try Another</button>
             </div>
         `;
 
@@ -174,6 +175,10 @@ class PracticeProblem extends HTMLElement {
             feedback.className = result.correct ? 'feedback success' : 'feedback error';
             feedback.innerHTML = result.explanation;
 
+            // Show the "Try Another" button
+            const nextBtn = this.shadowRoot.getElementById('next-btn');
+            if (nextBtn) nextBtn.style.display = 'block';
+
             if (window.renderMathInElement) {
                 window.renderMathInElement(feedback, {
                     delimiters: [
@@ -194,9 +199,37 @@ class PracticeProblem extends HTMLElement {
         }
     }
 
+    async loadNextQuestion() {
+        const nextBtn = this.shadowRoot.getElementById('next-btn');
+        const originalText = nextBtn.textContent;
+        nextBtn.textContent = 'Loading...';
+        nextBtn.disabled = true;
+
+        try {
+            const response = await fetch(`/api/question/next?current_id=${this.problemData.id}`);
+            if (!response.ok) throw new Error('Failed to load next question');
+            
+            this.problemData = await response.json();
+            this.renderContent();
+            this.setupEventListeners();
+        } catch (error) {
+            console.error('Error loading next question:', error);
+            nextBtn.textContent = 'Error';
+            setTimeout(() => {
+                nextBtn.textContent = originalText;
+                nextBtn.disabled = false;
+            }, 2000);
+        }
+    }
+
     setupEventListeners() {
         const submitBtn = this.shadowRoot.getElementById('submit-btn');
         submitBtn.addEventListener('click', () => this.checkAnswer());
+        
+        const nextBtn = this.shadowRoot.getElementById('next-btn');
+        if (nextBtn) {
+            nextBtn.addEventListener('click', () => this.loadNextQuestion());
+        }
 
         // Add enter key support for numerical input
         if (this.problemData.type === 'numerical') {

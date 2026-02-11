@@ -15,13 +15,19 @@ class LoginModal extends HTMLElement {
             <div class="modal-overlay" id="overlay">
                 <div class="modal-content">
                     <button class="close-btn" id="close">&times;</button>
-                    <h2>Login Required</h2>
-                    <div class="error" id="error-msg"></div>
-                    <form id="login-form">
-                        <input type="email" id="email" placeholder="Email Address" required>
-                        <input type="password" id="password" placeholder="Password" required>
-                        <button type="submit">Login</button>
-                    </form>
+                    <div id="login-container">
+                        <h2>Login Required</h2>
+                        <div class="error" id="error-msg"></div>
+                        <form id="login-form">
+                            <input type="email" id="email" placeholder="Email Address" required>
+                            <input type="password" id="password" placeholder="Password" required>
+                            <button type="submit">Login</button>
+                        </form>
+                    </div>
+                    <div id="success-msg" style="display: none; text-align: center;">
+                        <h2>Alright, alright, alright.</h2>
+                        <p>You're in. Let's keep livin'.</p>
+                    </div>
                 </div>
             </div>
         `;
@@ -55,7 +61,16 @@ class LoginModal extends HTMLElement {
                 const data = await response.json();
 
                 if (response.ok && data.success) {
-                    this.hide();
+                    // Show success message
+                    this.shadowRoot.getElementById('login-container').style.display = 'none';
+                    this.shadowRoot.getElementById('success-msg').style.display = 'block';
+                    
+                    // Dispatch event for main.js to pick up
+                    window.dispatchEvent(new CustomEvent('user-login-success'));
+
+                    setTimeout(() => {
+                        this.hide();
+                    }, 2000);
                 } else {
                     errorMsg.textContent = data.message || 'Login failed';
                     errorMsg.style.display = 'block';
@@ -72,6 +87,9 @@ class LoginModal extends HTMLElement {
         this.shadowRoot.getElementById('overlay').classList.remove('open'); 
         this.shadowRoot.getElementById('error-msg').style.display = 'none';
         this.shadowRoot.getElementById('login-form').reset();
+        // Reset view state
+        this.shadowRoot.getElementById('login-container').style.display = 'block';
+        this.shadowRoot.getElementById('success-msg').style.display = 'none';
     }
 }
 customElements.define('login-modal', LoginModal);
