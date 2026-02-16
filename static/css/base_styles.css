@@ -129,3 +129,18 @@
     width: 18px;
     height: 18px;
 }
+
+.spinner {
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.75s linear infinite;
+    margin-left: 0.5em;
+    vertical-align: text-bottom;
+}
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}

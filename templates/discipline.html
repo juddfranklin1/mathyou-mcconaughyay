@@ -1,24 +1,25 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h1 class="text-center mb-4">{{ discipline_name }}</h1>
 
 <div class="discipline-layout">
     <nav class="concept-nav" data-menu="concept-nav">
         <a href="#overview" class="nav-link" data-concept="overview">Overview</a>
-        {% for concept in concepts %}
+            {% for concept in concepts %}
             <a href="#{{ concept.slug }}" 
-               class="nav-link" 
-               data-concept="{{ concept.slug }}">
-                {{ concept.name }}
-            </a>
+            class="nav-link" 
+            data-concept="{{ concept.slug }}">
+            {{ concept.name }}
+        </a>
         {% endfor %}
     </nav>
-
-    <math-content 
-        discpline-name="{{ discipline_name }}"
-        discipline-id="{{ active_page }}"
-        data-problems='{{ problems | tojson }}'
-    ></math-content>
+    <main class="discipline-content">
+        <h1 class="text-center mb-4">{{ discipline_name }}</h1>
+        <math-content 
+            discpline-name="{{ discipline_name }}"
+            discipline-id="{{ active_page }}"
+            data-problems='{{ problems | tojson }}'
+        ></math-content>
+    </main>
 </div>
 {% endblock %}

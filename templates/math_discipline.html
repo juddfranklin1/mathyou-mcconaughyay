@@ -3,7 +3,6 @@
 {% block title %}{{ discipline_name }} Concepts{% endblock %}
 
 {% block content %}
-    <h1>{{ discipline_name }}</h1>
     <div class="discipline-layout">
         <nav class="nav-menu concept-nav" data-menu="concept-nav">
             <a href="#overview" class="nav-link active" data-concept="overview">Overview</a>
@@ -11,14 +10,16 @@
                 <a href="#{{ concept.slug }}" class="nav-link" data-concept="{{ concept.slug }}">{{ concept.name }}</a>
             {% endfor %}
         </nav>
-    
-        <math-content discipline-id="{{ active_page }}"
-            {% if problems %}
-                data-problems='{{ problems|tojson|safe }}'
-            {% endif %}>
-            <div slot="overview">
-                {% block overview_content %}{% endblock %}
-            </div>
-        </math-content>
+        <main class="discipline-content">
+            <h1>{{ discipline_name }}</h1>
+            <math-content discipline-id="{{ active_page }}"
+                {% if problems %}
+                    data-problems='{{ problems|tojson|safe }}'
+                {% endif %}>
+                <div slot="overview">
+                    {% block overview_content %}{% endblock %}
+                </div>
+            </math-content>
+        </main>
     </div>
 {% endblock %}

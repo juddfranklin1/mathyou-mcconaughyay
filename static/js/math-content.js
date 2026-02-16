@@ -2,7 +2,6 @@ class MathContent extends HTMLElement {
     constructor() {
         super();
         this.attachShadow({ mode: 'open' });
-        this.conceptCache = {};
         this.overviewCache = null;
     }
 
@@ -159,9 +158,12 @@ class MathContent extends HTMLElement {
         conceptContent.classList.add('active');
         conceptContent.innerHTML = `<div class="loading">Loading...</div>`;
 
-        // Use cache if available
-        if (this.conceptCache[conceptId]) {
-            this.renderConcept(this.conceptCache[conceptId], conceptId);
+        // Use session storage cache if available
+        const cacheKey = `mathyou_concept_${this.disciplineId}_${conceptId}`;
+        const cachedData = sessionStorage.getItem(cacheKey);
+
+        if (cachedData) {
+            this.renderConcept(JSON.parse(cachedData), conceptId);
             return;
         }
 
@@ -171,7 +173,7 @@ class MathContent extends HTMLElement {
                 throw new Error('Network response was not ok');
             }
             const data = await response.json();
-            this.conceptCache[conceptId] = data; // Cache the response
+            sessionStorage.setItem(cacheKey, JSON.stringify(data));
             this.renderConcept(data, conceptId);
         } catch (error) {
             if (error.name === 'AbortError') {

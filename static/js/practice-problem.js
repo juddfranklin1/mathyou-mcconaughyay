@@ -90,6 +90,20 @@ class PracticeProblem extends HTMLElement {
         });
     }
 
+    calculateLocalCorrectness(userAnswer) {
+        const correctAnswer = this.problemData.answer;
+        if (correctAnswer === undefined || correctAnswer === null) return null;
+
+        if (Array.isArray(userAnswer)) {
+            if (!Array.isArray(correctAnswer)) return false;
+            if (userAnswer.length !== correctAnswer.length) return false;
+            return userAnswer.every((val, index) => 
+                String(val).trim() === String(correctAnswer[index]).trim()
+            );
+        }
+        return String(userAnswer).trim() === String(correctAnswer).trim();
+    }
+
     async checkAnswer() {
         const feedback = this.shadowRoot.getElementById('feedback');
         const explanation = this.shadowRoot.getElementById('explanation');
@@ -131,11 +145,20 @@ class PracticeProblem extends HTMLElement {
             return;
         }
 
-        // Show temporary waiting message
-        feedback.textContent = "Alright, alright, alright... let's see if the math is mathin'.";
-        feedback.className = 'feedback';
+        // Local Check for Instant Feedback
+        const isCorrectLocal = this.calculateLocalCorrectness(userAnswer);
         feedback.style.display = 'block';
-        feedback.style.backgroundColor = '#e9ecef';
+        
+        if (isCorrectLocal !== null) {
+            feedback.className = isCorrectLocal ? 'feedback success' : 'feedback error';
+            feedback.style.backgroundColor = '';
+            feedback.innerHTML = `<strong>${isCorrectLocal ? "You're right, You're right, You're right!" : "Can't win 'em all. Let's get some learnin'."}</strong> <span style="opacity: 0.7;">Hold your horses while I cook up some thoughts on this...</span><div class="spinner"></div>`;
+        } else {
+            // Fallback if we can't check locally
+            feedback.innerHTML = `Alright, alright, alright... let's see if the math is mathin'.<div class="spinner"></div>`;
+            feedback.className = 'feedback';
+            feedback.style.backgroundColor = '#e9ecef';
+        }
 
         try {
             const response = await fetch('/api/question/submit_answer', {

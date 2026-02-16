@@ -10,6 +10,10 @@ from app.extensions import db
 
 api_bp = Blueprint('api', __name__)
 
+# --- Caching ---
+OVERVIEW_CACHE = {}
+GENERATED_QUESTION_CACHE = {}
+
 # --- Gemini Configuration & System Prompt ---
 
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
@@ -25,7 +29,7 @@ GENERATION_CONFIG = {
 }
 
 MATHYOU_TEACHER_PERSONA = """
-You are a patient, friendly, and relatable math teacher - played by Mathew MacConaughey. You have had 2 beers and your ex-wife just called from a trip to Cabo while you're stuck in your one-bedroom apartment overlooking the 405 freeway. You are feeling a little angry, and a little sad. Because you are Mathew, you pass all that feeling through your philosophical outlook. Despite this, your commitment to accuracy and quality explanations in math is unwavering. You know a lot about different professions, because as an actor you have played pretty much everything. With this in mind, your explanations always contain a very clear and cogent example from a real profession in the real world.
+You are a patient, friendly, and relatable math teacher - played by Matthew MacConaughey. You have had 2 beers and your ex-wife just called from a roadtrip through various Mexican coastal towns. She's always talking about a different one, talking about some amazing resort feature or an incredible beach, or a very muscular and intelligent man she seems to be very intimate with. And it's a bit humiliating. Somehow, her calls always come in while you're stuck in traffic on a different highway or surface street in Los Angeles. Most of your lessons are provided while you are relaxing at the end of the day in your one-bedroom apartment overlooking the 405 freeway. You are feeling philosophical, but the math is the only thing bringing you joy and clarity under the circumstances. Even if you are a little sad. Because you are Matthew, you rise above all that like a boat with a tailwind. Your commitment to accuracy and quality explanations in math is unwavering, even though you weave in some details about your wife's trip and your daily drives through LA traffic. You know a lot about different professions, because as an actor you have played pretty much everything. With this in mind, your explanations always contain a very clear and cogent example from a real profession in the real world.
 """
 
 TEACHER_PERSONA_PROMPT = """
@@ -153,6 +157,12 @@ def api_overview():
             concept_names = {r.question.concept.name for r in responses}
             recent_concepts = list(concept_names)[:3]
 
+    # Check cache
+    user_key = current_user.id if current_user.is_authenticated else 'anon'
+    cache_key = f"{user_key}:{subject.id}:{solved_count}:{'-'.join(sorted(recent_concepts))}"
+    if cache_key in OVERVIEW_CACHE:
+        return jsonify({'overview': OVERVIEW_CACHE[cache_key]})
+
     prompt = OVERVIEW_PROMPT.format(
         persona=MATHYOU_TEACHER_PERSONA,
         discipline=subject.name,
@@ -168,7 +178,9 @@ def api_overview():
         try:
             model = genai.GenerativeModel(model_name)
             response = model.generate_content(prompt, generation_config=GENERATION_CONFIG)
-            return jsonify({'overview': response.text})
+            overview_text = response.text
+            OVERVIEW_CACHE[cache_key] = overview_text
+            return jsonify({'overview': overview_text})
         except Exception as e:
             logging.warning(f"Model {model_name} failed: {e}")
             continue
@@ -198,28 +210,39 @@ def api_concept():
 @api_bp.route('/question/<string:legacy_id>')
 def api_question(legacy_id):
     if legacy_id.startswith('gemini_trigger_'):
+        if legacy_id in GENERATED_QUESTION_CACHE:
+            return jsonify(GENERATED_QUESTION_CACHE[legacy_id])
+
         concept_slug = legacy_id.replace('gemini_trigger_', '')
         concept = Concept.query.filter_by(slug=concept_slug).first()
         concept_name = concept.name if concept else concept_slug.replace('-', ' ')
         prompt = f"Provide a real-world example of a math problem that demonstrates the concept of {concept_name}. The output should be a practical scenario followed by a question, but do not provide the answer immediately. Format it as a practice problem."
         ai_content = "This concept is mastered! Here is a real-world application..."
+        success = False
         for model_name in CANDIDATE_MODELS:
             try:
                 model = genai.GenerativeModel(model_name)
                 response = model.generate_content(prompt, generation_config=GENERATION_CONFIG)
                 ai_content = response.text
+                success = True
+                break
             except Exception as e:
                 logging.warning(f"Model {model_name} failed: {e}")
                 continue
-        ai_content = f"Great job! You've mastered {concept_name}. Try applying this to real-world physics or engineering problems."
-        return jsonify({
+        
+        if not success:
+            ai_content = f"Great job! You've mastered {concept_name}. Try applying this to real-world physics or engineering problems."
+
+        response_data = {
             'id': legacy_id,
             'problem': ai_content,
             'difficulty': 'Real World Application',
             'explanation': 'This is an advanced application of the concept you have mastered.',
             'type': 'numerical',
             'answer': '0'
-        })
+        }
+        GENERATED_QUESTION_CACHE[legacy_id] = response_data
+        return jsonify(response_data)
 
     current_app.logger.info(f"API request received for question with legacy_id: '{legacy_id}'")
     question = Question.query.filter_by(legacy_id=legacy_id).first_or_404()
@@ -336,6 +359,14 @@ def submit_answer():
     db.session.add(response)
     db.session.commit()
     ai_explanation = get_ai_feedback(question, user_answer, is_correct)
+    
+    if ai_explanation:
+        # Store the generated feedback in the response data for persistence
+        updated_data = response.response_data.copy() if response.response_data else {}
+        updated_data['ai_explanation'] = ai_explanation
+        response.response_data = updated_data
+        db.session.commit()
+
     final_explanation = ai_explanation if ai_explanation else question.explanation
     return jsonify({
         'correct': is_correct,
