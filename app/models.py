@@ -1,4 +1,4 @@
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy import JSON
 from datetime import datetime
 from flask import current_app
 from flask_login import UserMixin
@@ -90,7 +90,7 @@ class Question(db.Model):
     # Flexible field for question type and answers
     # e.g., {"type": "multiple_choice", "choices": [...], "answer": 1}
     # e.g., {"type": "numerical", "answer": "5"}
-    data = db.Column(JSONB, nullable=False)
+    data = db.Column(JSON, nullable=False)
 
     concept = db.relationship('Concept', back_populates='questions')
     responses = db.relationship('UserResponse', back_populates='question', lazy=True)
@@ -104,7 +104,7 @@ class UserResponse(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     question_id = db.Column(db.Integer, db.ForeignKey('questions.id'), nullable=False)
     
-    response_data = db.Column(JSONB, nullable=False) # e.g., {"answer": "5"} or {"choice": 2}
+    response_data = db.Column(JSON, nullable=False) # e.g., {"answer": "5"} or {"choice": 2}
     is_correct = db.Column(db.Boolean, nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
